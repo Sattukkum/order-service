@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_shop
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shop
+    ports:
+      - "7432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init_data.sql:/docker-entrypoint-initdb.d/init_data.sql:ro
+
+  app:
+    build: .
+    container_name: order_service
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/shop
+    command: uv run uvicorn order_service.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:
